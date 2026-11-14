@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WordForge: Educational Research & Vocabulary Platform</title>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- FontAwesome Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<!-- Firebase SDKs (v9 Compat Mode) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+body { font-family: 'Inter', sans-serif; }
+</style>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 flex flex-col selection:bg-indigo-500 selection:text-white">
+
+<!-- NAVIGATION BAR -->
+<header class="bg-slate-900 text-white shadow-md sticky top-0 z-50">
+  <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+    <div class="flex items-center space-x-3 cursor-pointer" onclick="goHome()">
+      <div class="bg-indigo-600 p-2 rounded-xl text-white shadow-lg">
+        <i class="fa-solid fa-feather text-xl"></i>
+      </div>
+      <div>
+        <h1 class="text-xl font-extrabold tracking-tight flex items-center gap-2">
+          WordForge
+          <span class="text-[10px] bg-indigo-500/30 text-indigo-300 border border-indigo-400/30 px-2 py-0.5 rounded-full uppercase tracking-widest font-semibold">Cloud Edition</span>
+        </h1>
+      </div>
+    </div>
+    <div id="userInfo" class="hidden flex items-center space-x-4">
+      <div class="text-right hidden sm:block">
+        <p id="navUsername" class="text-sm font-semibold text-slate-200"></p>
+        <p id="navRole" class="text-xs font-medium"></p>
+      </div>
+      <button onclick="logout()" class="bg-slate-800 hover:bg-red-600 border border-slate-700 hover:border-red-500 text-slate-300 hover:text-white text-xs font-bold px-3 py-2 rounded-lg transition-all duration-200 shadow-sm flex items-center gap-1.5">
+        <i class="fa-solid fa-right-from-bracket"></i>
+        <span>Logout</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- MAIN CONTENT AREA -->
+<main class="flex-grow max-w-6xl w-full mx-auto p-4 md:p-6">
+
+  <!-- AUTH SCREEN -->
+  <div id="authScreen" class="max-w-md mx-auto my-8 md:my-12 bg-white p-8 rounded-2xl shadow-xl border border-slate-200 transition-all">
+    <div class="text-center mb-6">
+      <div class="inline-flex p-3 bg-indigo-50 text-indigo-600 rounded-2xl mb-3 border border-indigo-100">
+        <i class="fa-solid fa-cloud text-3xl"></i>
+      </div>
+      <h2 class="text-2xl font-extrabold text-slate-800">WordForge Portal</h2>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
+      <div>
+        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Username</label>
+        <input type="text" id="loginUser" required placeholder="Enter username" class="w-full px-3.5 py-2.5 bg-slate-50 border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition text-sm">
+      </div>
+      <div>
+        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Password</label>
+        <input type="password" id="loginPass" required placeholder="••••••••" class="w-full px-3.5 py-2.5 bg-slate-50 border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition text-sm">
+      </div>
+      <div>
+        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Unique ID (6 Digits)</label>
+        <input type="text" id="loginId" placeholder="e.g. 123456 or 000000" required class="w-full px-3.5 py-2.5 bg-slate-50 border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition text-sm">
+      </div>
+      <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-md transition-all active:scale-[0.99]">Sign In</button>
+      <div class="text-center mt-4 pt-2 border-t border-slate-100">
+        <button type="button" onclick="toggleAuthMode(true)" class="text-xs font-semibold text-indigo-600 hover:underline">Don't have an account? Register new user</button>
+      </div>
+    </form>
+
+    <!-- REGISTER FORM -->
+    <form id="regForm" onsubmit="handleRegister(event)" class="space-y-4 hidden">
+      <div>
+        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Choose Username</label>
+        <input type="text" id="regUser" required placeholder="Create username" class="w-full px-3.5 py-2.5 bg-slate-50 border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition text-sm">
+      </div>
+      <div>
+        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Choose Password</label>
+        <input type="password" id="regPass" required placeholder="Create password" class="w-full px-3.5 py-2.5 bg-slate-50 border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition text-sm">
+      </div>
+      <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-md transition-all active:scale-[0.99]">Create Student Account</button>
+      <div class="text-center mt-4 pt-2 border-t border-slate-100">
+        <button type="button" onclick="toggleAuthMode(false)" class="text-xs font-semibold text-slate-600 hover:underline">← Back to Login</button>
+      </div>
+    </form>
+
+    <!-- REGISTRATION SUCCESS (shows the Unique ID on screen) -->
+    <div id="regSuccess" class="hidden text-center space-y-4">
+      <div class="inline-flex p-3 bg-emerald-50 text-emerald-600 rounded-full border border-emerald-100">
+        <i class="fa-solid fa-circle-check text-3xl"></i>
+      </div>
+      <h3 class="text-xl font-extrabold text-slate-800">Account Created!</h3>
+      <p class="text-sm text-slate-600">Save your login details. You need your Unique ID every time you sign in.</p>
+      <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 text-left space-y-2">
+        <p class="text-xs font-bold uppercase text-slate-400">Username</p>
+        <p id="regSuccessUser" class="font-bold text-slate-800 break-all"></p>
+        <p class="text-xs font-bold uppercase text-slate-400 pt-2">Your Unique ID</p>
+        <p id="regSuccessId" class="font-mono text-3xl font-extrabold tracking-widest text-indigo-700"></p>
+      </div>
+      <button type="button" onclick="copyUniqueId()" id="copyIdBtn" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-sm transition">
+        <i class="fa-regular fa-copy mr-1"></i> Copy ID
+      </button>
+      <button type="button" onclick="goToLoginAfterRegister()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-md transition">Continue to Login</button>
+    </div>
+  </div>
+
+  <!-- ADMIN DASHBOARD PANEL -->
+  <div id="adminDashboard" class="hidden space-y-6">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs font-bold uppercase text-slate-400">Total Users</p>
+          <h3 id="statTotalUsers" class="text-2xl font-extrabold text-slate-800">0</h3>
+        </div>
+        <div class="p-3 bg-indigo-50 text-indigo-600 rounded-xl"><i class="fa-solid fa-users text-xl"></i></div>
+      </div>
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs font-bold uppercase text-slate-400">Students</p>
+          <h3 id="statStudents" class="text-2xl font-extrabold text-emerald-600">0</h3>
+        </div>
+        <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl"><i class="fa-solid fa-user-graduate text-xl"></i></div>
+      </div>
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs font-bold uppercase text-slate-400">Admins</p>
+          <h3 id="statAdmins" class="text-2xl font-extrabold text-red-600">1</h3>
+        </div>
+        <div class="p-3 bg-red-50 text-red-600 rounded-xl"><i class="fa-solid fa-user-shield text-xl"></i></div>
+      </div>
+    </div>
+
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h3 class="text-xl font-extrabold text-slate-800 flex items-center gap-2">
+            <i class="fa-solid fa-sliders text-red-600"></i> System Control & Participant Management
+          </h3>
+          <p class="text-xs text-slate-500">Manage registered accounts, reset passwords, or delete participants in real-time.</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <select id="roleFilter" onchange="loadAdminDashboard()" class="px-3 py-2 bg-slate-50 border rounded-xl text-xs font-semibold text-slate-600 outline-none">
+            <option value="ALL">All Roles</option>
+            <option value="Student">Students Only</option>
+            <option value="Admin">Admins Only</option>
+          </select>
+          <button onclick="resetSystemDatabase()" class="bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 font-bold px-3 py-2 rounded-xl text-xs transition flex items-center gap-1">
+            <i class="fa-solid fa-triangle-exclamation"></i> Clear Cloud DB
+          </button>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 text-xs font-bold uppercase">
+              <th class="p-3">ID</th>
+              <th class="p-3">Username</th>
+              <th class="p-3">Role</th>
+              <th class="p-3">Progress / Status</th>
+              <th class="p-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="adminTableBody" class="divide-y divide-slate-100 text-sm"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- STUDENT DASHBOARD -->
+  <div id="studentDashboard" class="hidden space-y-6">
+    <!-- Automatic Feedback Banner -->
+    <div class="bg-indigo-900 text-white rounded-2xl p-5 shadow-lg flex items-start space-x-4 relative overflow-hidden">
+      <div class="absolute -right-6 -bottom-6 text-indigo-800/40 text-8xl pointer-events-none">
+        <i class="fa-solid fa-graduation-cap"></i>
+      </div>
+      <div class="p-3 bg-indigo-800 rounded-xl text-indigo-200">
+        <i class="fa-solid fa-robot text-2xl"></i>
+      </div>
+      <div class="z-10">
+        <h4 class="font-bold text-sm tracking-wide text-indigo-200 uppercase">System Evaluation & Feedback</h4>
+        <p id="studentFeedbackNotice" class="text-sm mt-1 text-slate-100 font-medium">Complete Level 1 to receive your first evaluation.</p>
+      </div>
+    </div>
+
+    <!-- Level Map -->
+    <div id="levelMap" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+      <div class="flex justify-between items-center mb-6">
+        <div>
+          <h3 class="text-xl font-extrabold text-slate-800 flex items-center">
+            <i class="fa-solid fa-map-location-dot text-indigo-600 mr-2"></i> Learning Journey Levels
+          </h3>
+          <p class="text-xs text-slate-500 mt-1">20 Levels: Meaning + Sentence Writing, Quizzes (every 5 levels), & Paragraph Puzzles (every 10 levels)</p>
+        </div>
+      </div>
+      <div id="levelsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+    </div>
+
+    <!-- Gameplay Screen -->
+    <div id="gameplayArea" class="hidden space-y-6">
+      <div class="bg-white p-4 rounded-xl shadow-sm border flex justify-between items-center">
+        <button onclick="showLevelSelect()" class="text-slate-600 hover:text-slate-900 font-semibold text-xs md:text-sm flex items-center gap-1">
+          <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+        </button>
+        <h3 id="gameTitle" class="font-bold text-indigo-700 text-sm md:text-base"></h3>
+        <span id="gameProgress" class="text-xs bg-indigo-100 text-indigo-800 font-bold px-3 py-1 rounded-full"></span>
+      </div>
+
+      <!-- Phase 1: Word Meaning -->
+      <div class="bg-white p-6 rounded-2xl shadow-sm border space-y-4">
+        <h4 class="font-bold text-xs uppercase text-slate-500 tracking-wider">Phase 1: Word Meaning</h4>
+
+        <div class="bg-slate-50 p-6 rounded-xl border border-slate-200 text-center space-y-2">
+          <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">What does this word mean?</p>
+          <h2 id="vocabWord" class="text-4xl font-extrabold text-indigo-700 tracking-wide"></h2>
+        </div>
+
+        <div id="meaningOptions" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+        <p id="vocabFeedback" class="text-sm font-bold min-h-[20px] transition-all"></p>
+      </div>
+
+      <!-- Phase 2: Sentence Writing -->
+      <div id="sentencePhase" class="bg-white p-6 rounded-2xl shadow-sm border space-y-4 opacity-50 pointer-events-none transition-all">
+        <h4 class="font-bold text-xs uppercase text-slate-500 tracking-wider">Phase 2: Sentence Writing</h4>
+        <p id="sentencePrompt" class="text-sm font-semibold text-slate-700">Complete Phase 1 to unlock.</p>
+        <p id="sentenceHint" class="text-xs italic bg-amber-50 border border-amber-200 text-amber-800 p-2.5 rounded-lg inline-block max-w-xl hidden"></p>
+        <textarea id="sentenceInput" rows="3" placeholder="Type your own sentence here..." onkeydown="sentenceKey(event)" class="w-full px-4 py-3 border rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 text-slate-800 text-sm font-medium"></textarea>
+        <div id="sentenceFeedback" class="text-sm font-semibold space-y-1"></div>
+        <div class="flex justify-end pt-2 border-t">
+          <button onclick="verifySentence()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2.5 rounded-xl transition shadow-md">Submit Sentence</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quiz Screen -->
+    <div id="quizArea" class="hidden bg-white p-6 rounded-2xl shadow-sm border space-y-6">
+      <div class="flex justify-between items-center border-b pb-4">
+        <div>
+          <h3 id="quizTitle" class="text-xl font-extrabold text-purple-900">Quiz</h3>
+          <p class="text-xs text-slate-500 mt-0.5">Review vocabulary, syntax, and situational applications from recent levels.</p>
+        </div>
+        <span id="quizNum" class="text-xs font-bold bg-purple-100 text-purple-800 px-3 py-1 rounded-full"></span>
+      </div>
+      <p id="quizQuestion" class="text-lg font-semibold text-slate-800"></p>
+      <div id="quizOptions" class="space-y-3"></div>
+      <button onclick="submitQuizAnswer()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3.5 rounded-xl transition shadow-md">Submit Answer</button>
+    </div>
+
+    <!-- Paragraph Screen -->
+    <div id="paragraphArea" class="hidden bg-white p-6 rounded-2xl shadow-sm border space-y-6">
+      <div class="flex justify-between items-center">
+        <button onclick="showLevelSelect()" class="text-slate-600 hover:text-slate-900 font-semibold text-xs md:text-sm">
+          <i class="fa-solid fa-arrow-left mr-1"></i> Back to Dashboard
+        </button>
+        <span class="text-xs bg-amber-100 text-amber-800 font-bold px-3 py-1 rounded-full">Paragraph Synthesis</span>
+      </div>
+      <div>
+        <h3 id="paraTitle" class="text-xl font-extrabold text-amber-900">Paragraph Puzzle</h3>
+        <p class="text-xs text-slate-500 mt-1">Select the exact target terms that fit logically into each contextual blank.</p>
+      </div>
+      <div id="paragraphText" class="p-5 bg-amber-50/70 rounded-2xl border border-amber-200 text-slate-800 leading-relaxed font-serif text-lg shadow-inner"></div>
+      <div id="paragraphBlanks" class="space-y-3"></div>
+      <button onclick="verifyParagraph()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3.5 rounded-xl transition shadow-md">Submit Paragraph Solution</button>
+    </div>
+  </div>
+
+  <!-- ADMIN RESET PASSWORD MODAL -->
+  <div id="resetPasswordModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4">
+      <div class="flex justify-between items-start">
+        <h3 id="resetModalTitle" class="text-lg font-bold text-slate-800">Reset User Password</h3>
+        <button onclick="closeResetModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <div>
+        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">New Password</label>
+        <input type="password" id="newPasswordInput" placeholder="Enter new password" class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+      </div>
+      <div class="flex justify-end space-x-2">
+        <button onclick="closeResetModal()" class="px-4 py-2 text-slate-600 hover:bg-slate-100 font-bold rounded-xl text-xs transition">Cancel</button>
+        <button onclick="saveNewPassword()" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition shadow-md">Update Password</button>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- APPLICATION SCRIPT LOGIC -->
+<script>
+// FIREBASE CONFIGURATION
+const firebaseConfig = {
+  apiKey: "AIzaSyCSuLczYp_cjF1uYmv80x2CHUtlSmiIXqg",
+  authDomain: "wordforge-9fa3c.firebaseapp.com",
+  databaseURL: "https://wordforge-9fa3c-default-rtdb.firebaseio.com",
+  projectId: "wordforge-9fa3c",
+  storageBucket: "wordforge-9fa3c.firebasestorage.app",
+  messagingSenderId: "386469663589",
+  appId: "1:386469663589:web:692a76f9c18b31f409478c",
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+let database = {};
+
+// Listen for live updates from Firebase Cloud DB
+db.ref('users').on('value', (snapshot) => {
+  database = snapshot.val() || {};
+
+  if (!database['admin']) {
+    database['admin'] = { password: "password123", role: "Admin", id: "000000" };
+    db.ref('users/admin').set(database['admin']);
+  }
+
+  if (currentUser && database[currentUser]) {
+    if (database[currentUser].role === 'Admin') loadAdminDashboard();
+    else {
+      document.getElementById('studentFeedbackNotice').innerText = database[currentUser].system_feedback || "Complete Level 1 to receive your first evaluation.";
+    }
+  }
+});
+
+function saveUserRecord(username) {
+  if (database[username]) db.ref('users/' + username).set(database[username]);
+}
+
+function esc(str) {
+  return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// 20-LEVEL CURRICULUM
+const LEVELS = {
+  1: { title: "Level 1", puzzles: [
+    { vocab: "eager", hint: "Very excited or keen to do something." },
+    { vocab: "fierce", hint: "Showing ferocious aggressiveness or intensity." }
+  ]},
+  2: { title: "Level 2", puzzles: [
+    { vocab: "clever", hint: "Quick to understand and devise ideas." },
+    { vocab: "abundant", hint: "Existing or available in large quantities." }
+  ]},
+  3: { title: "Level 3", puzzles: [
+    { vocab: "reluctant", hint: "Unwilling and hesitant to act." },
+    { vocab: "precise", hint: "Marked by exactness and accuracy." }
+  ]},
+  4: { title: "Level 4", puzzles: [
+    { vocab: "meticulous", hint: "Showing great attention to detail; careful." },
+    { vocab: "conspicuous", hint: "Clearly visible or attracting attention." }
+  ]},
+  5: { title: "Level 5 Quiz", isQuiz: true, questions: [
+    { question: "1. What is the meaning of 'eager'?", options: ["Very excited or keen", "Slow and lazy", "Quiet and shy", "Angry and hostile"], answer: 0 },
+    { question: "2. Which word means 'existing in large, plentiful quantities'?", options: ["Reluctant", "Abundant", "Precise", "Fierce"], answer: 1 },
+    { question: "3. What does 'meticulous' mean?", options: ["Fast and careless", "Brightly colored", "Very careful and detailed", "Hesitant to act"], answer: 2 },
+    { question: "4. If someone is standing out so as to be clearly visible, they are:", options: ["Conspicuous", "Reluctant", "Precise", "Clever"], answer: 0 },
+    { question: "5. Maria checks her science experiment three times to ensure there are no errors before writing her report. Which word best describes her work habit?", options: ["Meticulous", "Ambiguous", "Reluctant", "Fierce"], answer: 0 },
+    { question: "6. During a debate, Leo gives an explanation that can be interpreted in two completely different ways. How should his explanation be classified?", options: ["Precise", "Ambiguous", "Abundant", "Eager"], answer: 1 },
+    { question: "7. What is the antonym (opposite) of 'reluctant'?", options: ["Hesitant", "Eager", "Distant", "Careless"], answer: 1 },
+    { question: "8. The community center received an overwhelming supply of donations after the harvest festival, filling every storage room. Which vocabulary term fits this scenario?", options: ["Abundant", "Fierce", "Conspicuous", "Clever"], answer: 0 },
+    { question: "9. Which term describes someone who is quick to understand and solve tricky puzzles?", options: ["Clever", "Reluctant", "Ambiguous", "Meticulous"], answer: 0 },
+    { question: "10. A ship is sailing through a violent storm with extremely aggressive and powerful waves. What kind of weather conditions is the ship facing?", options: ["Fierce", "Precise", "Abundant", "Conspicuous"], answer: 0 }
+  ]},
+  6: { title: "Level 6", puzzles: [
+    { vocab: "ambiguous", hint: "Open to more than one interpretation; unclear." },
+    { vocab: "pragmatic", hint: "Dealing with things sensibly and realistically." }
+  ]},
+  7: { title: "Level 7", puzzles: [
+    { vocab: "benevolent", hint: "Well-meaning, kindly, and charitable." },
+    { vocab: "skeptical", hint: "Not easily convinced; having doubts." }
+  ]},
+  8: { title: "Level 8", puzzles: [
+    { vocab: "innovative", hint: "Featuring new, advanced, and original methods." },
+    { vocab: "tenacious", hint: "Tending to keep a firm hold; persistent." }
+  ]},
+  9: { title: "Level 9", puzzles: [
+    { vocab: "venerable", hint: "Accorded a great deal of respect due to age or wisdom." },
+    { vocab: "audacious", hint: "Showing a willingness to take surprisingly bold risks." }
+  ]},
+  10: { title: "Level 10: Paragraph Puzzle", isParagraph: true,
+    textTemplate: "During the annual exhibition, the team presented an [1] solution for clean water filtration. Her supervisor gave [2] advice regarding the prototype, ensuring that all measurements were [3] and reliable before the final presentation.",
+    blanks: [
+      { target: "innovative", options: ["innovative", "ambiguous", "reluctant"] },
+      { target: "pragmatic", options: ["pragmatic", "fierce", "conspicuous"] },
+      { target: "precise", options: ["precise", "eager", "benevolent"] }
+    ]
+  },
+  11: { title: "Level 11", puzzles: [
+    { vocab: "resilient", hint: "Able to withstand or recover quickly from difficult conditions." },
+    { vocab: "eloquent", hint: "Fluent or persuasive in speaking or writing." }
+  ]},
+  12: { title: "Level 12", puzzles: [
+    { vocab: "diligence", hint: "Careful and persistent work or effort." },
+    { vocab: "profound", hint: "Very great or intense; showing deep insight." }
+  ]},
+  13: { title: "Level 13", puzzles: [
+    { vocab: "versatile", hint: "Able to adapt or be adapted to many different functions." },
+    { vocab: "candid", hint: "Truthful and straightforward; frank." }
+  ]},
+  14: { title: "Level 14", puzzles: [
+    { vocab: "exemplary", hint: "Serving as a desirable model; representing the best." },
+    { vocab: "scrupulous", hint: "Diligently attentive to details and moral standards." }
+  ]},
+  15: { title: "Level 15: Quiz", isQuiz: true, questions: [
+    { question: "1. What does 'resilient' describe?", options: ["Quick to give up", "Able to recover quickly from hardship", "Quiet and weak", "Overly confident"], answer: 1 },
+    { question: "2. An 'eloquent' speaker is someone who is:", options: ["Fluent and persuasive", "Rude and loud", "Silent and shy", "Unclear"], answer: 0 },
+    { question: "3. What is the meaning of 'versatile'?", options: ["Single-purposed", "Adaptable to many tasks", "Slow to respond", "Rigid"], answer: 1 },
+    { question: "4. Someone who is 'scrupulous' is known for being:", options: ["Careless and messy", "Attentive to detail and standards", "Dishonest", "Fearful"], answer: 1 },
+    { question: "5. Despite facing severe structural setbacks, the local business bounced back stronger within weeks. Which quality did the business demonstrate?", options: ["Resilient", "Versatile", "Candid", "Profound"], answer: 0 },
+    { question: "6. During a company town hall, the director shares completely honest and unvarnished feedback about the project's failures. What kind of tone is the director using?", options: ["Candid", "Eloquent", "Scrupulous", "Diligence"], answer: 0 },
+    { question: "7. What does 'profound' imply regarding intellectual or emotional depth?", options: ["Superficial and quick", "Very great or intense insight", "Confusing and ambiguous", "Careless and messy"], answer: 1 },
+    { question: "8. A multi-tool pocketknife can be used for cutting, tightening screws, opening cans, and measuring. How would you describe this tool?", options: ["Versatile", "Resilient", "Scrupulous", "Eloquent"], answer: 0 },
+    { question: "9. Which term describes steady, earnest, and persistent effort toward a goal?", options: ["Diligence", "Profound", "Candid", "Versatile"], answer: 0 },
+    { question: "10. A legal auditor meticulously verifies every single transaction line to maintain the highest moral and factual standards. Which term defines this auditor?", options: ["Scrupulous", "Resilient", "Eloquent", "Versatile"], answer: 0 }
+  ]},
+  16: { title: "Level 16", puzzles: [
+    { vocab: "lucid", hint: "Expressed clearly; easy to understand." },
+    { vocab: "formidable", hint: "Inspiring fear or respect through being impressively large or powerful." }
+  ]},
+  17: { title: "Level 17", puzzles: [
+    { vocab: "astute", hint: "Having or showing an ability to accurately assess situations." },
+    { vocab: "intrinsic", hint: "Belonging naturally; essential." }
+  ]},
+  18: { title: "Level 18", puzzles: [
+    { vocab: "vigilant", hint: "Keeping careful watch for possible danger or difficulties." },
+    { vocab: "perseverance", hint: "Persistence in doing something despite difficulty." }
+  ]},
+  19: { title: "Level 19", puzzles: [
+    { vocab: "impeccable", hint: "In accordance with the highest standards; faultless." },
+    { vocab: "judicious", hint: "Having, showing, or done with good judgment or sense." }
+  ]},
+  20: { title: "Level 20: Paragraph Puzzle", isParagraph: true,
+    textTemplate: "The scholar demonstrated [1] dedication throughout her studies, giving a remarkably [2] defense of her thesis. Her work was praised for its [3] accuracy and contribution to science.",
+    blanks: [
+      { target: "exemplary", options: ["exemplary", "reluctant", "ambiguous"] },
+      { target: "eloquent", options: ["eloquent", "fierce", "conspicuous"] },
+      { target: "impeccable", options: ["impeccable", "audacious", "pragmatic"] }
+    ]
+  }
+};
+
+// Pool of all word/meaning pairs (used to make wrong answer choices)
+const ALL_PUZZLES = [];
+Object.values(LEVELS).forEach(l => { if (l.puzzles) l.puzzles.forEach(p => ALL_PUZZLES.push(p)); });
+
+// ACTIVE STATE
+let currentUser = null;
+let currentLevel = 1;
+let currentPuzzleIdx = 0;
+let levelMistakes = 0;
+let meaningSolved = false;
+let currentQuizIdx = 0;
+let quizScore = 0;
+let activeUserForReset = null;
+
+function toggleAuthMode(isReg) {
+  document.getElementById('regSuccess').classList.add('hidden');
+  document.getElementById('loginForm').classList.toggle('hidden', isReg);
+  document.getElementById('regForm').classList.toggle('hidden', !isReg);
+}
+
+function ensureStudentData(u) {
+  const rec = database[u];
+  if (rec.role === 'Teacher') rec.role = 'Student'; // Teacher role has been removed
+  if (rec.role === 'Student') {
+    if (!rec.ratings) rec.ratings = {};
+    if (!rec.unlocked) rec.unlocked = { 1: true };
+    if (!rec.weak_words) rec.weak_words = {};
+    if (!rec.system_feedback) rec.system_feedback = "Complete Level 1 to receive your first evaluation.";
+    if (!rec.quiz_l5) rec.quiz_l5 = "Not Taken";
+    if (!rec.quiz_l15) rec.quiz_l15 = "Not Taken";
+    if (!rec.para_l10) rec.para_l10 = "Not Taken";
+    if (!rec.para_l20) rec.para_l20 = "Not Taken";
+  }
+}
+
+function handleLogin(e) {
+  e.preventDefault();
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value.trim();
+  const id = document.getElementById('loginId').value.trim();
+
+  if (database[u] && database[u].password === p && database[u].id === id) {
+    currentUser = u;
+    ensureStudentData(u);
+    saveUserRecord(u);
+
+    document.getElementById('navUsername').innerText = u;
+    const roleElem = document.getElementById('navRole');
+    roleElem.innerText = `Role: ${database[u].role}`;
+    roleElem.className = database[u].role === "Admin" ? "text-xs text-red-400 font-bold" : "text-xs text-indigo-300 font-medium";
+
+    document.getElementById('userInfo').classList.remove('hidden');
+    document.getElementById('authScreen').classList.add('hidden');
+
+    if (database[u].role === "Admin") loadAdminDashboard();
+    else showLevelSelect();
+  } else {
+    alert('Invalid Username, Password, or Unique ID!');
+  }
+}
+
+function handleRegister(e) {
+  e.preventDefault();
+  const u = document.getElementById('regUser').value.trim();
+  const p = document.getElementById('regPass').value.trim();
+
+  if (database[u]) {
+    alert('Username already exists!');
+    return;
+  }
+
+  const uniqueId = Math.floor(100000 + Math.random() * 900000).toString();
+  database[u] = {
+    password: p,
+    role: "Student",
+    id: uniqueId,
+    ratings: { 1: 0 },
+    unlocked: { 1: true },
+    quiz_l5: "Not Taken",
+    quiz_l15: "Not Taken",
+    para_l10: "Not Taken",
+    para_l20: "Not Taken",
+    weak_words: {},
+    system_feedback: "Welcome! Complete Level 1 to receive your first evaluation."
+  };
+
+  saveUserRecord(u);
+
+  // Show the Unique ID on screen (not in an alert, which some browsers block)
+  document.getElementById('regSuccessUser').innerText = u;
+  document.getElementById('regSuccessId').innerText = uniqueId;
+  document.getElementById('regForm').classList.add('hidden');
+  document.getElementById('loginForm').classList.add('hidden');
+  document.getElementById('regSuccess').classList.remove('hidden');
+  document.getElementById('regUser').value = '';
+  document.getElementById('regPass').value = '';
+}
+
+function copyUniqueId() {
+  const id = document.getElementById('regSuccessId').innerText;
+  const btn = document.getElementById('copyIdBtn');
+  const done = () => { btn.innerHTML = '<i class="fa-solid fa-check mr-1"></i> Copied!'; };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(id).then(done).catch(() => {});
+  }
+}
+
+function goToLoginAfterRegister() {
+  document.getElementById('loginUser').value = document.getElementById('regSuccessUser').innerText;
+  document.getElementById('loginId').value = document.getElementById('regSuccessId').innerText;
+  document.getElementById('regSuccess').classList.add('hidden');
+  document.getElementById('copyIdBtn').innerHTML = '<i class="fa-regular fa-copy mr-1"></i> Copy ID';
+  toggleAuthMode(false);
+  document.getElementById('loginPass').focus();
+}
+
+function logout() {
+  currentUser = null;
+  document.getElementById('userInfo').classList.add('hidden');
+  document.getElementById('studentDashboard').classList.add('hidden');
+  document.getElementById('adminDashboard').classList.add('hidden');
+  document.getElementById('authScreen').classList.remove('hidden');
+}
+
+function goHome() {
+  if (currentUser && database[currentUser]) {
+    if (database[currentUser].role === "Admin") loadAdminDashboard();
+    else showLevelSelect();
+  }
+}
+
+// ==================== AUTOMATIC FEEDBACK ====================
+function recordWeakWord(word) {
+  const rec = database[currentUser];
+  if (!rec.weak_words) rec.weak_words = {};
+  rec.weak_words[word] = (rec.weak_words[word] || 0) + 1;
+}
+
+function generateFeedback(rec) {
+  const ratings = rec.ratings || {};
+  const done = Object.keys(ratings).filter(k => ratings[k] > 0);
+  if (!done.length) return "Complete Level 1 to receive your first evaluation.";
+
+  const avg = done.reduce((s, k) => s + ratings[k], 0) / done.length;
+  const parts = [];
+  parts.push(`You completed ${done.length}/20 levels with an average of ${avg.toFixed(1)} stars.`);
+
+  if (avg >= 2.5) parts.push("Excellent work! Your vocabulary and sentence writing are very strong.");
+  else if (avg >= 1.8) parts.push("Good progress! You are understanding most words; keep practicing to earn more stars.");
+  else parts.push("Keep practicing! Re-read the meanings carefully and take your time writing sentences.");
+
+  [["quiz_l5", "Level 5"], ["quiz_l15", "Level 15"]].forEach(([key, label]) => {
+    const v = rec[key];
+    if (v && v !== "Not Taken") {
+      const score = parseInt(v.split('/')[0], 10);
+      if (score >= 8) parts.push(`${label} quiz: ${v} - great mastery.`);
+      else if (score >= 5) parts.push(`${label} quiz: ${v} - fair, review the words you missed.`);
+      else parts.push(`${label} quiz: ${v} - please review the earlier levels and try again.`);
+    }
+  });
+
+  if (rec.para_l10 && rec.para_l10 !== "Not Taken") parts.push("You solved the Level 10 paragraph puzzle.");
+  if (rec.para_l20 && rec.para_l20 !== "Not Taken") parts.push("You solved the Level 20 paragraph puzzle.");
+
+  const weak = Object.entries(rec.weak_words || {}).sort((a, b) => b[1] - a[1]).slice(0, 3).map(w => w[0]);
+  if (weak.length) parts.push(`Words to review: ${weak.join(', ')}.`);
+
+  const unlocked = Object.keys(rec.unlocked || {}).map(Number);
+  const next = unlocked.length ? Math.max(...unlocked) : 1;
+  if (done.length < 20) parts.push(`Next step: continue with Level ${next}.`);
+  else parts.push("You finished every level. Congratulations!");
+
+  return parts.join(' ');
+}
+
+function updateFeedback() {
+  const rec = database[currentUser];
+  rec.system_feedback = generateFeedback(rec);
+}
+
+// ==================== ADMIN PORTAL LOGIC ====================
+function loadAdminDashboard() {
+  document.getElementById('adminDashboard').classList.remove('hidden');
+  document.getElementById('studentDashboard').classList.add('hidden');
+
+  const keys = Object.keys(database);
+  let students = 0, admins = 0;
+  keys.forEach(k => { if (database[k].role === 'Admin') admins++; else students++; });
+
+  document.getElementById('statTotalUsers').innerText = keys.length;
+  document.getElementById('statStudents').innerText = students;
+  document.getElementById('statAdmins').innerText = admins;
+
+  const roleFilter = document.getElementById('roleFilter').value;
+  const tbody = document.getElementById('adminTableBody');
+  tbody.innerHTML = '';
+
+  keys.forEach(u => {
+    const user = database[u];
+    const isAdmin = user.role === 'Admin';
+    if (roleFilter === 'Admin' && !isAdmin) return;
+    if (roleFilter === 'Student' && isAdmin) return;
+
+    const roleBadge = isAdmin
+      ? `<span class="bg-red-100 text-red-800 text-xs font-bold px-2 py-0.5 rounded">Master Admin</span>`
+      : `<span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2 py-0.5 rounded">Student</span>`;
+
+    let progressInfo;
+    if (!isAdmin) {
+      const unlockedCount = Object.keys(user.unlocked || {}).length || 1;
+      progressInfo = `<span class="font-semibold text-indigo-600">${unlockedCount}/20 Levels Unlocked</span>`;
+    } else {
+      progressInfo = `<span class="text-slate-400 italic">System Access</span>`;
+    }
+
+    const isSelf = u === currentUser;
+
+    tbody.innerHTML += `
+      <tr class="hover:bg-slate-50 transition">
+        <td class="p-3 font-mono font-bold text-slate-500">${esc(user.id)}</td>
+        <td class="p-3 font-bold text-slate-800 flex items-center gap-1.5">
+          ${esc(u)} ${isSelf ? '<span class="text-[10px] bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded font-bold">(You)</span>' : ''}
+        </td>
+        <td class="p-3">${roleBadge}</td>
+        <td class="p-3 text-xs">${progressInfo}</td>
+        <td class="p-3 text-right space-x-1">
+          ${!isSelf ? `
+            <button data-user="${esc(u)}" onclick="openResetModal(this.dataset.user)" class="bg-amber-100 hover:bg-amber-200 text-amber-800 text-xs font-bold px-2.5 py-1 rounded-lg transition" title="Reset Password">
+              <i class="fa-solid fa-key"></i>
+            </button>
+            <button data-user="${esc(u)}" onclick="deleteParticipant(this.dataset.user)" class="bg-red-100 hover:bg-red-200 text-red-700 text-xs font-bold px-2.5 py-1 rounded-lg transition" title="Delete Participant">
+              <i class="fa-solid fa-trash-can"></i> Delete
+            </button>
+          ` : '<span class="text-xs text-slate-400 italic pr-2">Protected Master Account</span>'}
+        </td>
+      </tr>
+    `;
+  });
+}
+
+function deleteParticipant(username) {
+  if (username === currentUser) {
+    alert("You cannot delete your own active administrator account!");
+    return;
+  }
+  if (confirm(`Are you sure you want to permanently remove participant "${username}" from the system?`)) {
+    db.ref('users/' + username).remove();
+    alert(`Participant "${username}" has been deleted successfully.`);
+  }
+}
+
+function openResetModal(username) {
+  activeUserForReset = username;
+  document.getElementById('resetModalTitle').innerText = `Reset Password: ${username}`;
+  document.getElementById('newPasswordInput').value = '';
+  document.getElementById('resetPasswordModal').classList.remove('hidden');
+}
+
+function closeResetModal() {
+  document.getElementById('resetPasswordModal').classList.add('hidden');
+}
+
+function saveNewPassword() {
+  const newPass = document.getElementById('newPasswordInput').value.trim();
+  if (!newPass) {
+    alert("Please enter a valid password.");
+    return;
+  }
+  if (activeUserForReset && database[activeUserForReset]) {
+    database[activeUserForReset].password = newPass;
+    saveUserRecord(activeUserForReset);
+    alert(`Password for "${activeUserForReset}" updated successfully.`);
+    closeResetModal();
+  }
+}
+
+function resetSystemDatabase() {
+  if (confirm("WARNING: This will remove all student accounts and reset the database to only the Master Admin. Continue?")) {
+    db.ref('users').set({
+      "admin": { password: "password123", role: "Admin", id: "000000" }
+    });
+    alert("Cloud database cleared successfully.");
+  }
+}
+
+// ==================== STUDENT LEVEL MAP ====================
+function showLevelSelect() {
+  document.getElementById('studentDashboard').classList.remove('hidden');
+  document.getElementById('adminDashboard').classList.add('hidden');
+  document.getElementById('levelMap').classList.remove('hidden');
+  document.getElementById('gameplayArea').classList.add('hidden');
+  document.getElementById('quizArea').classList.add('hidden');
+  document.getElementById('paragraphArea').classList.add('hidden');
+
+  const userData = database[currentUser];
+  document.getElementById('studentFeedbackNotice').innerText = userData.system_feedback || "Complete Level 1 to receive your first evaluation.";
+
+  const grid = document.getElementById('levelsGrid');
+  grid.innerHTML = '';
+
+  for (let i = 1; i <= 20; i++) {
+    const isUnlocked = userData.unlocked[i];
+    const stars = userData.ratings ? userData.ratings[i] || 0 : 0;
+    const starStr = '★'.repeat(stars) + '☆'.repeat(3 - stars);
+
+    let badge = `<span class="text-[10px] uppercase font-extrabold px-2 py-0.5 rounded">Regular</span>`;
+    let btnColor = isUnlocked ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-slate-200 text-slate-400 cursor-not-allowed';
+
+    if (LEVELS[i].isQuiz) {
+      badge = `<span class="text-[10px] uppercase font-extrabold bg-purple-100 text-purple-700 px-2 py-0.5 rounded">Quiz</span>`;
+      btnColor = isUnlocked ? 'bg-purple-600 hover:bg-purple-700 text-white' : 'bg-slate-200 text-slate-400 cursor-not-allowed';
+    } else if (LEVELS[i].isParagraph) {
+      badge = `<span class="text-[10px] uppercase font-extrabold bg-amber-100 text-amber-800 px-2 py-0.5 rounded">Paragraph</span>`;
+      btnColor = isUnlocked ? 'bg-amber-600 hover:bg-amber-700 text-white' : 'bg-slate-200 text-slate-400 cursor-not-allowed';
+    }
+
+    const card = document.createElement('div');
+    card.className = `p-4 rounded-xl border flex flex-col justify-between transition-all ${isUnlocked ? 'bg-white shadow-sm border-slate-200 hover:shadow-md' : 'bg-slate-50 border-slate-200 opacity-70'}`;
+    card.innerHTML = `
+      <div>
+        <div class="flex justify-between items-center mb-2">
+          ${badge}
+          <span class="text-amber-400 text-xs tracking-widest">${starStr}</span>
+        </div>
+        <h4 class="font-bold text-xs md:text-sm text-slate-800 mb-3">${LEVELS[i].title}</h4>
+      </div>
+      <button onclick="startLevel(${i})" ${!isUnlocked ? 'disabled' : ''} class="w-full py-2 rounded-lg text-xs font-bold transition shadow-sm ${btnColor}">
+        ${isUnlocked ? 'Start Level' : '<i class="fa-solid fa-lock mr-1"></i> Locked'}
+      </button>
+    `;
+    grid.appendChild(card);
+  }
+}
+
+// LEVEL CONTROLLER
+function startLevel(lvl) {
+  currentLevel = lvl;
+  currentPuzzleIdx = 0;
+  levelMistakes = 0;
+
+  document.getElementById('levelMap').classList.add('hidden');
+
+  if (LEVELS[lvl].isQuiz) startQuiz();
+  else if (LEVELS[lvl].isParagraph) startParagraph();
+  else {
+    document.getElementById('gameplayArea').classList.remove('hidden');
+    loadPuzzle();
+  }
+}
+
+// ==================== REGULAR LEVEL GAMEPLAY ====================
+function loadPuzzle() {
+  const puzzle = LEVELS[currentLevel].puzzles[currentPuzzleIdx];
+  meaningSolved = false;
+
+  document.getElementById('gameTitle').innerText = LEVELS[currentLevel].title;
+  document.getElementById('gameProgress').innerText = `Puzzle ${currentPuzzleIdx + 1}/${LEVELS[currentLevel].puzzles.length}`;
+  document.getElementById('vocabWord').innerText = puzzle.vocab;
+  document.getElementById('vocabFeedback').innerText = '';
+
+  // Phase 1: build multiple-choice meanings
+  const wrong = shuffle(ALL_PUZZLES.filter(p => p.vocab !== puzzle.vocab && p.hint !== puzzle.hint)).slice(0, 3).map(p => p.hint);
+  const options = shuffle([puzzle.hint, ...wrong]);
+  const box = document.getElementById('meaningOptions');
+  box.innerHTML = '';
+  options.forEach(text => {
+    const btn = document.createElement('button');
+    btn.className = 'text-left px-4 py-3 bg-white hover:bg-indigo-50 border-2 border-slate-200 hover:border-indigo-300 rounded-xl text-sm font-medium text-slate-700 transition';
+    btn.textContent = text;
+    btn.onclick = () => chooseMeaning(btn, text);
+    box.appendChild(btn);
+  });
+
+  // Phase 2 locked
+  document.getElementById('sentencePhase').classList.add('opacity-50', 'pointer-events-none');
+  document.getElementById('sentencePrompt').innerText = 'Complete Phase 1 to unlock.';
+  document.getElementById('sentenceHint').classList.add('hidden');
+  document.getElementById('sentenceInput').value = '';
+  document.getElementById('sentenceFeedback').innerHTML = '';
+}
+
+function chooseMeaning(btn, text) {
+  if (meaningSolved) return;
+  const puzzle = LEVELS[currentLevel].puzzles[currentPuzzleIdx];
+  const fb = document.getElementById('vocabFeedback');
+
+  if (text === puzzle.hint) {
+    meaningSolved = true;
+    btn.className = 'text-left px-4 py-3 bg-emerald-50 border-2 border-emerald-500 rounded-xl text-sm font-semibold text-emerald-800';
+    document.querySelectorAll('#meaningOptions button').forEach(b => { b.disabled = true; });
+    fb.innerText = '✓ Correct! Now use the word in your own sentence.';
+    fb.className = 'text-sm font-bold min-h-[20px] text-emerald-600';
+
+    document.getElementById('sentencePhase').classList.remove('opacity-50', 'pointer-events-none');
+    document.getElementById('sentencePrompt').innerText = `Write your own sentence using the word "${puzzle.vocab}".`;
+    const hintEl = document.getElementById('sentenceHint');
+    hintEl.innerText = `Meaning: ${puzzle.hint}`;
+    hintEl.classList.remove('hidden');
+    document.getElementById('sentenceInput').focus();
+  } else {
+    levelMistakes++;
+    recordWeakWord(puzzle.vocab);
+    btn.disabled = true;
+    btn.className = 'text-left px-4 py-3 bg-red-50 border-2 border-red-300 rounded-xl text-sm font-medium text-red-700 opacity-70';
+    fb.innerText = '✗ Not quite. Try another meaning.';
+    fb.className = 'text-sm font-bold min-h-[20px] text-red-500';
+  }
+}
+
+// Phase 2: typed sentence is checked by the system
+function validateSentence(raw, vocab, hint) {
+  const s = raw.trim().replace(/\s+/g, ' ');
+  const errors = [];
+  const words = s.split(' ').filter(Boolean);
+
+  if (words.length < 5) errors.push('Write a complete sentence with at least 5 words.');
+
+  const re = new RegExp('\\b' + vocab + '(s|es|d|ed|ing|ly|ness)?\\b', 'i');
+  if (!re.test(s)) errors.push(`Use the word "${vocab}" in your sentence.`);
+
+  if (s && !/^[A-Z]/.test(s)) errors.push('Start the sentence with a capital letter.');
+  if (s && !/[.!?]$/.test(s)) errors.push('End the sentence with a period, question mark, or exclamation mark.');
+  if (/\b(\w+)\s+\1\b/i.test(s)) errors.push('A word is repeated twice in a row.');
+  if (/(^|\s)i(\s|$|')/.test(s)) errors.push('Capitalize the pronoun "I".');
+
+  const badWord = words.some(w => {
+    const c = w.replace(/[^a-z]/gi, '');
+    return c.length > 3 && !/[aeiouy]/i.test(c);
+  });
+  if (badWord) errors.push('Some words look misspelled. Check your spelling.');
+
+  const plainHint = hint.toLowerCase().replace(/[.]/g, '');
+  if (s.toLowerCase().replace(/[.!?]/g, '').includes(plainHint)) errors.push("Write your own sentence - don't copy the meaning.");
+
+  if (new Set(words.map(w => w.toLowerCase())).size < 4) errors.push('Use more different words in your sentence.');
+
+  return errors;
+}
+
+function sentenceKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    verifySentence();
+  }
+}
+
+function verifySentence() {
+  if (!meaningSolved) return;
+  const puzzle = LEVELS[currentLevel].puzzles[currentPuzzleIdx];
+  const text = document.getElementById('sentenceInput').value;
+  const fb = document.getElementById('sentenceFeedback');
+  const errors = validateSentence(text, puzzle.vocab, puzzle.hint);
+
+  if (errors.length) {
+    levelMistakes++;
+    recordWeakWord(puzzle.vocab);
+    fb.innerHTML = errors.map(er => `<p class="text-red-500">✗ ${esc(er)}</p>`).join('');
+    return;
+  }
+
+  fb.innerHTML = '<p class="text-emerald-600">✓ Great sentence!</p>';
+  currentPuzzleIdx++;
+  setTimeout(() => {
+    if (currentPuzzleIdx < LEVELS[currentLevel].puzzles.length) loadPuzzle();
+    else finishLevel();
+  }, 700);
+}
+
+function finishLevel() {
+  let stars = 3;
+  if (levelMistakes > 3) stars = 1;
+  else if (levelMistakes > 0) stars = 2;
+
+  const rec = database[currentUser];
+  if (!rec.ratings) rec.ratings = {};
+  if (!rec.unlocked) rec.unlocked = {};
+
+  rec.ratings[currentLevel] = Math.max(rec.ratings[currentLevel] || 0, stars);
+  if (currentLevel < 20) rec.unlocked[currentLevel + 1] = true;
+
+  updateFeedback();
+  saveUserRecord(currentUser);
+  alert(`Level ${currentLevel} Completed!\nEarned Stars: ${'★'.repeat(stars)}`);
+  showLevelSelect();
+}
+
+// ==================== QUIZ (Level 5 & 15) ====================
+function startQuiz() {
+  document.getElementById('quizArea').classList.remove('hidden');
+  currentQuizIdx = 0;
+  quizScore = 0;
+  document.getElementById('quizTitle').innerText = LEVELS[currentLevel].title;
+  loadQuizQuestion();
+}
+
+function loadQuizQuestion() {
+  const qList = LEVELS[currentLevel].questions;
+  const q = qList[currentQuizIdx];
+  document.getElementById('quizNum').innerText = `Question ${currentQuizIdx + 1}/${qList.length}`;
+  document.getElementById('quizQuestion').innerText = q.question;
+
+  const opts = document.getElementById('quizOptions');
+  opts.innerHTML = '';
+  q.options.forEach((opt, idx) => {
+    opts.innerHTML += `
+      <label class="flex items-center space-x-3 p-3.5 border rounded-xl hover:bg-purple-50/50 cursor-pointer transition">
+        <input type="radio" name="quizOpt" value="${idx}" class="text-purple-600 focus:ring-purple-500">
+        <span class="text-sm text-slate-700 font-medium">${esc(opt)}</span>
+      </label>
+    `;
+  });
+}
+
+function submitQuizAnswer() {
+  const qList = LEVELS[currentLevel].questions;
+  const selected = document.querySelector('input[name="quizOpt"]:checked');
+  if (!selected) return alert('Please select an option before proceeding!');
+
+  if (parseInt(selected.value) === qList[currentQuizIdx].answer) quizScore++;
+
+  currentQuizIdx++;
+  if (currentQuizIdx < qList.length) {
+    loadQuizQuestion();
+  } else {
+    const rec = database[currentUser];
+    const resStr = `${quizScore}/${qList.length}`;
+    if (currentLevel === 5) rec.quiz_l5 = resStr;
+    if (currentLevel === 15) rec.quiz_l15 = resStr;
+
+    if (!rec.ratings) rec.ratings = {};
+    if (!rec.unlocked) rec.unlocked = {};
+
+    rec.ratings[currentLevel] = quizScore >= 7 ? 3 : (quizScore >= 4 ? 2 : 1);
+    if (currentLevel < 20) rec.unlocked[currentLevel + 1] = true;
+
+    updateFeedback();
+    saveUserRecord(currentUser);
+    alert(`Quiz Assessment Complete!\nFinal Score: ${resStr}`);
+    showLevelSelect();
+  }
+}
+
+// ==================== PARAGRAPH (Level 10 & 20) ====================
+function startParagraph() {
+  document.getElementById('paragraphArea').classList.remove('hidden');
+  const data = LEVELS[currentLevel];
+  document.getElementById('paraTitle').innerText = data.title;
+
+  document.getElementById('paragraphText').innerHTML = data.textTemplate
+    .replace('[1]', `<b class="text-amber-800 underline px-1">[1]</b>`)
+    .replace('[2]', `<b class="text-amber-800 underline px-1">[2]</b>`)
+    .replace('[3]', `<b class="text-amber-800 underline px-1">[3]</b>`);
+
+  const container = document.getElementById('paragraphBlanks');
+  container.innerHTML = '';
+  data.blanks.forEach((b, idx) => {
+    const optionsHtml = shuffle(b.options).map(o => `<option value="${o}">${o}</option>`).join('');
+    container.innerHTML += `
+      <div class="flex items-center space-x-4 bg-slate-50 p-3 rounded-xl border">
+        <span class="text-xs font-bold text-slate-500 uppercase">Blank [${idx + 1}]</span>
+        <select id="blank${idx}" class="flex-grow p-2 border rounded-lg bg-white text-sm outline-none font-semibold text-slate-700">
+          ${optionsHtml}
+        </select>
+      </div>
+    `;
+  });
+}
+
+function verifyParagraph() {
+  const data = LEVELS[currentLevel];
+  let correct = true;
+
+  data.blanks.forEach((b, idx) => {
+    const val = document.getElementById(`blank${idx}`).value;
+    if (val !== b.target) {
+      correct = false;
+      recordWeakWord(b.target);
+    }
+  });
+
+  const rec = database[currentUser];
+  if (correct) {
+    if (currentLevel === 10) rec.para_l10 = "Passed (3 Stars)";
+    if (currentLevel === 20) rec.para_l20 = "Passed (3 Stars)";
+
+    if (!rec.ratings) rec.ratings = {};
+    if (!rec.unlocked) rec.unlocked = {};
+
+    rec.ratings[currentLevel] = 3;
+    if (currentLevel < 20) rec.unlocked[currentLevel + 1] = true;
+
+    updateFeedback();
+    saveUserRecord(currentUser);
+    alert('Congratulations! Syntactic paragraph puzzle solved perfectly!');
+    showLevelSelect();
+  } else {
+    saveUserRecord(currentUser);
+    alert('Some word selections are contextually incorrect. Review choices and try again!');
+  }
+}
+</script>
+</body>
+</html>
